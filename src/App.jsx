@@ -1,11 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import ProductCard from './components/ProductCard'
 import DiscountBanner from './components/DiscountBanner'
 
-const allProducts = [
+const API_URL = "https://ecommerce-backend-production-eebf.up.railway.app"
+
+const categories = ['All', 'Graphics Card', 'Phone', 'Laptop', 'PC', 'Accessory']
+
+const fallbackProducts = [
   {
-    id: 1,
+    _id: '1',
     name: 'RTX 5070 Ti',
     desc: 'Next-gen graphics card with 16GB VRAM & DLSS 4.0',
     price: 150000,
@@ -15,7 +19,7 @@ const allProducts = [
     imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=500&q=80',
   },
   {
-    id: 2,
+    _id: '2',
     name: 'Samsung S25 Ultra',
     desc: 'Flagship phone with 200MP camera & titanium frame',
     price: 280000,
@@ -25,7 +29,7 @@ const allProducts = [
     imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&q=80',
   },
   {
-    id: 3,
+    _id: '3',
     name: 'ROG Gaming Laptop',
     desc: 'Intel i9, 32GB RAM, RTX 4080, 1TB SSD',
     price: 450000,
@@ -35,7 +39,7 @@ const allProducts = [
     imageUrl: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&q=80',
   },
   {
-    id: 4,
+    _id: '4',
     name: 'Mechanical Keyboard',
     desc: 'Cherry MX Red switches, RGB backlit, aluminum body',
     price: 12000,
@@ -45,7 +49,7 @@ const allProducts = [
     imageUrl: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=500&q=80',
   },
   {
-    id: 5,
+    _id: '5',
     name: 'Custom Gaming PC',
     desc: 'Full RGB build, i9-13900K, RTX 4090, 64GB DDR5',
     price: 900000,
@@ -55,7 +59,7 @@ const allProducts = [
     imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c228816256?w=500&q=80',
   },
   {
-    id: 6,
+    _id: '6',
     name: 'Gaming Headset',
     desc: '7.1 Surround Sound, noise-cancelling mic, 40hr battery',
     price: 18000,
@@ -66,14 +70,26 @@ const allProducts = [
   },
 ]
 
-const categories = ['All', 'Graphics Card', 'Phone', 'Laptop', 'PC', 'Accessory']
-
 export default function App() {
+  const [products, setProducts] = useState(fallbackProducts)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [cartCount, setCartCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  const filtered = allProducts.filter(p => {
+  useEffect(() => {
+    fetch(`${API_URL}/api/products`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data)
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchCat = activeCategory === 'All' || p.category === activeCategory
     return matchSearch && matchCat
@@ -81,15 +97,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar
-        setSearchTerm={setSearchTerm}
-        cartCount={cartCount}
-      />
-
+      <Navbar setSearchTerm={setSearchTerm} cartCount={cartCount} />
       <main className="px-4 py-8 mx-auto max-w-7xl">
         <DiscountBanner />
-
-        {/* Category Filter */}
         <div className="flex flex-wrap gap-2 mb-6">
           {categories.map(cat => (
             <button
@@ -105,17 +115,15 @@ export default function App() {
             </button>
           ))}
         </div>
-
-        {/* Heading */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            🔥 Featured Products
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800">🔥 Featured Products</h2>
           <span className="text-sm text-gray-500">{filtered.length} products found</span>
         </div>
-
-        {/* Grid */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="py-20 text-center text-gray-400">
+            <p className="text-xl">Loading products...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-20 text-center text-gray-400">
             <p className="mb-4 text-5xl">🔍</p>
             <p className="text-xl">No products found</p>
@@ -124,7 +132,7 @@ export default function App() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map(product => (
               <ProductCard
-                key={product.id}
+                key={product._id}
                 product={product}
                 onAddToCart={() => setCartCount(c => c + 1)}
               />
