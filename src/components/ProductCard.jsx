@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 export default function ProductCard({ product, onAddToCart }) {
-  const { id, name, desc, price, originalPrice, badge, imageUrl, category } = product
+  const { _id, id, name, desc, price, originalPrice, badge, imageUrl, category } = product
+  const productId = _id || id
   const [hovered, setHovered] = useState(false)
   const [added, setAdded] = useState(false)
 
@@ -33,7 +34,7 @@ export default function ProductCard({ product, onAddToCart }) {
         {/* Quick View overlay */}
         <div className={`absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
           <Link
-            to={`/product/${id}`}
+            to={`/product/${productId}`}
             className="px-5 py-2 text-sm font-semibold text-gray-800 transition bg-white rounded-full hover:bg-blue-600 hover:text-white"
           >
             Quick View
@@ -74,7 +75,7 @@ export default function ProductCard({ product, onAddToCart }) {
         {/* Buttons */}
         <div className="flex gap-2">
           <Link
-            to={`/product/${id}`}
+            to={`/product/${productId}`}
             className="flex-1 py-2 text-sm font-semibold text-center text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             View Details
