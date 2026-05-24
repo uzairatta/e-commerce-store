@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 
-const allProducts = [
+const API_URL = "https://ecommerce-backend-production-eebf.up.railway.app"
+
+const fallbackProducts = [
   {
     id: 1,
     name: 'RTX 5070 Ti',
@@ -76,12 +78,48 @@ export default function ProductDetail() {
   const navigate = useNavigate()
   const [added, setAdded] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [product, setProduct] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const product = allProducts.find(p => p.id === parseInt(id))
+  useEffect(() => {
+    // Try fetching from backend first
+    fetch(`${API_URL}/api/products/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data._id) {
+          setProduct(data)
+        } else {
+          // fallback to hardcoded
+          const found = fallbackProducts.find(
+            p => p.id === parseInt(id) || p._id === id
+          )
+          setProduct(found || null)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        const found = fallbackProducts.find(
+          p => p.id === parseInt(id) || p._id === id
+        )
+        setProduct(found || null)
+        setLoading(false)
+      })
+  }, [id])
 
   const discount = product?.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar setSearchTerm={() => {}} cartCount={0} />
+        <div className="flex items-center justify-center py-32">
+          <p className="text-xl text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!product) {
     return (
@@ -104,9 +142,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar setSearchTerm={() => {}} cartCount={cartCount} />
-
       <div className="max-w-5xl px-4 py-10 mx-auto">
-        {/* Back button */}
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 mb-8 font-semibold text-blue-600 transition hover:text-blue-800"
@@ -141,17 +177,18 @@ export default function ProductDetail() {
               <h1 className="mb-3 text-3xl font-extrabold text-gray-800">{product.name}</h1>
               <p className="mb-6 text-base leading-relaxed text-gray-500">{product.desc}</p>
 
-              {/* Specs */}
-              <div className="mb-6">
-                <h3 className="mb-2 font-bold text-gray-700">Specifications</h3>
-                <ul className="space-y-1">
-                  {product.specs.map((spec, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="font-bold text-green-500">✓</span> {spec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {product.specs && (
+                <div className="mb-6">
+                  <h3 className="mb-2 font-bold text-gray-700">Specifications</h3>
+                  <ul className="space-y-1">
+                    {product.specs.map((spec, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="font-bold text-green-500">✓</span> {spec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Price + Buttons */}
@@ -169,7 +206,11 @@ export default function ProductDetail() {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => { setCartCount(c => c + 1); setAdded(true); setTimeout(() => setAdded(false), 1500) }}
+                  onClick={() => {
+                    setCartCount(c => c + 1)
+                    setAdded(true)
+                    setTimeout(() => setAdded(false), 1500)
+                  }}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm transition ${
                     added
                       ? 'bg-green-100 text-green-700 border border-green-400'
